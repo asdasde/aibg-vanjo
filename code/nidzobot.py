@@ -28,6 +28,10 @@ class Bot(AbstractBot):
             return
 
         next_cord = shortest_path[1]
+        # if you dont have enough energy to move to the next cell, rest
+        if self.players[self.us].energy <= self.manhattan_distance_of_path([self.map.get_player_position(self.us + 1), next_cord]) * min(8, 1 + self.players[self.us].backpack_capacity):
+            self.next_move = 'rest'
+            return
         self.move(next_cord)
 
 
@@ -112,7 +116,7 @@ class Bot(AbstractBot):
                                         shortest_path = path
                                         shortest_path_to_resource = len(path_to_resource)-1
                                         shortest_path_to_base = len(path_to_base)-1
-                                        manhattan_distance_min = self.manhattan_distance_of_path(path_to_resource) + min(1, new_resource.mines_left() * new_resource.left) * self.manhattan_distance_of_path(path_to_base)
+                                        manhattan_distance_min = self.manhattan_distance_of_path(path_to_resource) + min(8, 1 + new_resource.mines_left() * new_resource.left) * self.manhattan_distance_of_path(path_to_base)
 
                     if shortest_path >= 1000:
                         continue
