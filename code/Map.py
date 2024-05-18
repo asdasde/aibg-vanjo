@@ -6,7 +6,7 @@ import networkx as nx
 
 class Map:
     def __init__(self, board: list):
-        self.board = list(reversed(board))
+        self.board = board
         self.rows = len(self.board)
         self.cols = len(self.board[0]) if self.rows > 0 else 0
         self.graph = self._create_graph()
@@ -52,7 +52,21 @@ class Map:
                 break
 
     def shortest_path(self, source, target):
-        return nx.shortest_path(self.graph, source = source, target = target)
+        try:
+            shortest_path = nx.shortest_path(self.graph, source = source, target = target)
+            return shortest_path
+        except nx.exception.NetworkXNoPath:
+            return None
+
+    def get_player_position(self, player : int) -> tuple:
+        for r in range(len(self.board)):
+            for c in range(len(self.board[0])):
+                if self.board[r][c] == str(player):
+                    return r, c
+        return -1, -1
+
+    def cell_is_empty(self, cell : tuple) -> bool:
+        return self.board[cell[0]][cell[1]] == 'E'
 
     def print_board(self):
         max_width = max(len(cell) for row in self.board for cell in row)
