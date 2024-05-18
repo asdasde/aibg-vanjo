@@ -33,6 +33,7 @@ class AbstractBot(ABC):
         self.players = [Player(self.state_json['player1']), Player(self.state_json['player2'])]
         self.player_positions = [self.map.get_player_position(1), self.map.get_player_position(2)]
 
+        sys.stderr.write(f"Turn: {self.turn}\n")
         self.map.print_board()
         self.map.print_graph_stats()
 
