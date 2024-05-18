@@ -34,7 +34,6 @@ class Bot(AbstractBot):
             return
         self.move(next_cord)
 
-
     def calculate_next_move(self):
         self.next_move = 'rest'
         resource_tiles = self.find_all_resource_tiles()

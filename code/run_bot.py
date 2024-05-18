@@ -1,5 +1,5 @@
 import sys
-from nidzobot import Bot
+from merged_bot import Bot
 import time
 
 bot = Bot()

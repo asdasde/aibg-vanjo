@@ -42,6 +42,9 @@ class AbstractBot(ABC):
         self.next_move = f'build {target[0]} {target[1]}'
 
     def move(self, target):
+
+        if self.players[self.us].daze_turns > 0:
+            target = (2 * self.player_positions[self.us][0] - target[0], 2 * self.player_positions[self.us][1] - target[1])
         self.next_move = f'move {target[0]} {target[1]}'
 
     def convert(self, diamondcoins=0, mineralcoins=0, diamondenergy=0, mineralenergy=0, diamondxp=0, mineralxp=0):

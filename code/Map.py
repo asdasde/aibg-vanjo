@@ -53,12 +53,15 @@ class Map:
             else:
                 break
 
+    def check_bounds(self, node : tuple) -> bool:
+        nx, ny = node
+        return 0 <= nx < self.rows and 0 <= ny < self.cols
     def get_adjecent_nodes_with_value(self, node : tuple, list_of_values : list):
         nodes = []
         for dx, dy in self.directions:
             nx = node[0] + dx
             ny = node[1] + dy
-            if 0 <= nx < self.rows and 0 <= ny < self.cols and self.board[nx][ny] in list_of_values:
+            if self.check_bounds((nx, ny)) and self.board[nx][ny] in list_of_values:
                 nodes.append((nx, ny))
         return nodes
     def get_adjecent_edges_from(self, nodes : list):
