@@ -21,7 +21,9 @@ class Bot:
         self.player1 = Player(self.state_json['player1'])
         self.player2 = Player(self.state_json['player2'])
         self.map = Map(self.state_json['board'])
-        sys.stderr.write(self.map.__str__() + '\n')
+        self.map.print_board()
+        #sys.stderr.write(str(self.map.__str__()) + '\n')
+        sys.stderr.write(str(self.map.shortest_path((0, 0), (8, 8))) + '\n')
 
     def calculate_next_move(self):
         self.next_move = 'rest'
