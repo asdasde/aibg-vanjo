@@ -68,6 +68,7 @@ class Map:
         return list(set(adjacent_edges))
 
     def shortest_path(self, source, target, list_to_delete = None):
+        target = [target] if not isinstance(target, list) else target
 
         if not isinstance(target, list):
             target = [target]

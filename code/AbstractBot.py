@@ -3,6 +3,7 @@ import json
 from Player import Player
 from Map import Map
 from abc import ABC, abstractmethod
+#from resource import Resource
 
 class AbstractBot(ABC):
     def __init__(self):
@@ -70,5 +71,5 @@ class AbstractBot(ABC):
 
     def play_move(self):
         sys.stderr.write(f'I played : {self.next_move}\n')
-        print(self.next_move, flush = True)
+        print(self.next_move, flush=True)
         sys.stderr.write('-------------------------------\n')

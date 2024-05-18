@@ -15,4 +15,3 @@ class Player:
         self.processed_minerals = player_json['processed_minerals']
         self.raw_diamonds = player_json['raw_diamonds']
         self.processed_diamonds = player_json['processed_diamonds']
-
