@@ -17,9 +17,18 @@ class AbstractBot(ABC):
         self.map = None
         self.next_move = None
 
+        self.bases = [(9, 0), (0, 9)]
+
+        self.us = None
+        self.opponent = None
+
     def parse_line(self, line : str):
         self.state_json = json.loads(line)
         self.turn = self.state_json['turn']
+
+        self.us = self.turn % 2
+        self.opponent = 1 - self.us
+
         self.map = Map(self.state_json['board'])
         self.map.print_board()
         self.players = [Player(self.state_json['player1']), Player(self.state_json['player2'])]
