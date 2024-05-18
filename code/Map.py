@@ -105,6 +105,13 @@ class Map:
                 sys.stderr.write(f"{self.board[r][c]:<{max_width + 2}}")
             sys.stderr.write("\n")
 
+    def print_graph_stats(self):
+        sys.stderr.write(f'graph nodes : {self.graph.nodes} \n')
+        sys.stderr.write(f'num nodes : {len(self.graph.nodes)} \n')
+
+        sys.stderr.write(f'num edges: {len(self.graph.edges)} \n')
+        sys.stderr.write(f'edges: {self.graph.edges} \n')
+
     def check_varticulation(self, point : tuple, point1 : tuple, point2 : tuple, nodes_to_ignore = None) -> bool:
 
         edges = self.graph.edges(point, data=True)
@@ -121,8 +128,6 @@ class Map:
 
     def find_varticulation_points(self, point1 : tuple, point2 : tuple, nodes_to_ignore = None) -> list:
 
-        sys.stderr.write(f'graph nodes : {self.graph.nodes} \n')
-        sys.stderr.write(f'num nodes : {len(self.graph.nodes)} \n')
 
         sys.stderr.write(f"Shortest path from {point1} to {point2} : {self.shortest_path(point1, point2, nodes_to_ignore)} \n")
 
