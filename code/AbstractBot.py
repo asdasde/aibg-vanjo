@@ -29,6 +29,29 @@ class AbstractBot(ABC):
     def build_factory(self, target):
         self.next_move = f'build {target[0]} {target[1]}'
 
+    def move(self, target):
+        self.next_move = f'move {target[0]} {target[1]}'
+
+    def convert(self, diamond=0, mineral=0, coins=0, energy=0, xp=0):
+        self.next_move = f'conv {diamond} diamond {mineral} mineral to coins, {energy} diamond {xp} mineral to energy, {xp} diamond {xp} mineral to xp'
+    def mine(self, target):
+        self.next_move = f'mine {target[0]} {target[1]}'
+
+    def rest(self):
+        self.next_move = 'rest'
+
+    def shop(self, item):
+        self.next_move = f'shop {item}'
+
+    def attack(self, target):
+        self.next_move = f'attack {target[0]} {target[1]}'
+
+    def put_refinement(self, target, mineral, diamond):
+        self.next_move = f'refinement-put {target[0]} {target[1]} mineral {mineral} diamond {diamond}'
+
+    def take_refinement(self, target, mineral, diamond):
+        self.next_move = f'refinement-take {target[0]} {target[1]} mineral {mineral} diamond {diamond}'
+
     @abstractmethod
     def calculate_next_move(self):
         pass
