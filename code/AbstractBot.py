@@ -69,3 +69,4 @@ class AbstractBot(ABC):
     def play_move(self):
         sys.stderr.write(f'I played : {self.next_move}\n')
         print(self.next_move, flush = True)
+        sys.stderr.write('-------------------------------\n')
