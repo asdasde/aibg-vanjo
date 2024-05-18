@@ -33,6 +33,9 @@ class AbstractBot(ABC):
         self.players = [Player(self.state_json['player1']), Player(self.state_json['player2'])]
         self.player_positions = [self.map.get_player_position(1), self.map.get_player_position(2)]
 
+        self.map.print_board()
+        self.map.print_graph_stats()
+
     def build_factory(self, target):
         self.next_move = f'build {target[0]} {target[1]}'
 
@@ -65,8 +68,6 @@ class AbstractBot(ABC):
         pass
 
     def play_move(self):
-        self.map.print_board()
-        self.map.print_graph_stats()
         sys.stderr.write(f'I played : {self.next_move}\n')
         print(self.next_move, flush = True)
         sys.stderr.write('-------------------------------\n')

@@ -79,11 +79,16 @@ class Map:
                 res.append(source)
                 return list(reversed(res))
             for neighbor in self.graph.neighbors(current_node):
+                has_blocker = False
                 for x in list_to_delete:
                     if neighbor[0] == x[0] and current_node[0] == x[0] and (neighbor[1] <= x[1] <= current_node[1] or current_node[1] <= x[1] <= neighbor[1]):
-                        continue
+                        has_blocker = True
                     if neighbor[1] == x[1] and current_node[1] == x[1] and (neighbor[0] <= x[0] <= current_node[0] or current_node[0] <= x[0] <= neighbor[0]):
-                        continue
+                        has_blocker = True
+
+                if has_blocker:
+                    continue
+
                 if from_node[neighbor[0]][neighbor[1]] != (-1, -1):
                     continue
                 queue.append(neighbor)
@@ -102,12 +107,15 @@ class Map:
         return self.board[cell[0]][cell[1]] == 'E'
 
 
-    def check_varticulation(self, point : tuple, point1 : tuple, point2 : tuple, nodes_to_ignore = None) -> bool:
+    def check_varticulation(self, point1 : tuple, point2 : tuple, nodes_to_ignore = None) -> bool:
+        if (1,9) in nodes_to_ignore:
+            sys.stderr.write(f" varticulation {point1} to {point2} ignoring {nodes_to_ignore} shorthest path {self.shortest_path(point1, point2, nodes_to_ignore)}\n")
+
         return self.shortest_path(point1, point2, nodes_to_ignore) is None
 
     def find_varticulation_points(self, point1 : tuple, point2 : tuple, nodes_to_ignore = None) -> list:
-
-        sys.stderr.write(f"Shortest path from {point1} to {point2} : {self.shortest_path(point1, point2, nodes_to_ignore)} \n")
+        sys.stderr.write(f" varticulation {point1} to {point2} ignoring {nodes_to_ignore}\n")
+        sys.stderr.write(f" varticulation Shortest path from {point1} to {point2} : {self.shortest_path(point1, point2, nodes_to_ignore)} \n")
 
         if point1 == point2:
             return []
@@ -115,7 +123,7 @@ class Map:
         varticulation_points = []
         for r in range(len(self.board)):
             for c in range(len(self.board[0])):
-                if self.cell_is_empty((r, c)) and self.check_varticulation((r, c), point1, point2, nodes_to_ignore):
+                if self.cell_is_empty((r, c)) and self.check_varticulation(point1, point2, nodes_to_ignore + [(r, c)]):
                     varticulation_points.append((r, c))
         return varticulation_points
 
