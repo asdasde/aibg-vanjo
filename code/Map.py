@@ -59,6 +59,7 @@ class Map:
         return list(set(adjacent_edges))
 
     def shortest_path(self, source, target, list_to_delete = None):
+        target = [target] if not isinstance(target, list) else target
 
         list_to_delete = [] if list_to_delete is None else list_to_delete
 
@@ -71,7 +72,7 @@ class Map:
             from_node.append(cur)
         while len(queue) > 0:
             current_node = queue.pop(0)
-            if current_node == target:
+            if current_node in target:
                 res = []
                 while current_node != source:
                     res.append(current_node)

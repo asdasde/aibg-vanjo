@@ -1,5 +1,5 @@
 import sys
-from bot import Bot
+from nidzobot import Bot
 
 bot = Bot()
 while True:
