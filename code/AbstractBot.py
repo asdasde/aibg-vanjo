@@ -41,8 +41,9 @@ class AbstractBot(ABC):
     def move(self, target):
         self.next_move = f'move {target[0]} {target[1]}'
 
-    def convert(self, diamond=0, mineral=0, coins=0, energy=0, xp=0):
-        self.next_move = f'conv {diamond} diamond {mineral} mineral to coins, {energy} diamond {xp} mineral to energy, {xp} diamond {xp} mineral to xp'
+    def convert(self, diamondcoins=0, mineralcoins=0, diamondenergy=0, mineralenergy=0, diamondxp=0, mineralxp=0):
+        self.next_move = f'conv {diamondcoins} diamond {mineralcoins} mineral to coins, {diamondenergy} diamond {mineralenergy} mineral to energy, {diamondxp} diamond {mineralxp} mineral to xp'
+
     def mine(self, target):
         self.next_move = f'mine {target[0]} {target[1]}'
 
