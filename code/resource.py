@@ -12,6 +12,7 @@ class Resource:
         self.weight = 5 if self.type == 'D' else 2
         self.shortest_path_to_resource = 1000
         self.shortest_path_to_base = 1000
+        self.manhattan_distance_min = None
         self.position_to_collect = None
 
     def __str__(self):

@@ -11,6 +11,15 @@ dy_list = [1, -1, 0]
 
 class Bot(AbstractBot):
 
+    def __init__(self):
+        super().__init__()
+        self.turn_on_base_leave = None
+
+    def parse_line(self, line : str):
+        super().parse_line(line)
+        if self.turn_on_base_leave is None:
+            self.turn_on_base_leave = self.us
+
     def reach_target(self, target):
         shortest_path = self.map.shortest_path(self.map.get_player_position(self.us + 1), target)
 
@@ -20,6 +29,7 @@ class Bot(AbstractBot):
 
         next_cord = shortest_path[1]
         self.move(next_cord)
+
 
     def calculate_next_move(self):
         self.next_move = 'rest'
@@ -37,11 +47,31 @@ class Bot(AbstractBot):
 
         if self.map.get_player_position(self.us + 1) == self.bases[self.us]:
             my_player = self.players[self.us]
-            self.convert(0, 0, 0, 0,
-                                          int(my_player.raw_diamonds) + int(my_player.processed_diamonds),
-                                          int(my_player.raw_minerals) + int(my_player.processed_minerals))
+            raw_minerals = int(my_player.raw_minerals)
+            raw_diamonds = int(my_player.raw_diamonds)
+            processed_minerals = int(my_player.processed_minerals)
+            processed_diamonds = int(my_player.processed_diamonds)
+            if my_player.energy < 250:
+                expected_energy_needed = (1000 - my_player.energy) * (250 - self.turn) / max(self.turn, 1)
+                if expected_energy_needed > my_player.energy * 0.92:
+                    minerals_to_xp = max(raw_minerals + processed_minerals - 1, 0)
+                    diamonds_to_xp = raw_diamonds + processed_diamonds
+                    if minerals_to_xp == raw_minerals + processed_minerals and my_player.energy < 100:
+                        diamonds_to_xp = max(raw_diamonds + processed_diamonds - 1, 0)
+                else:
+                    minerals_to_xp = raw_minerals + processed_minerals
+                    diamonds_to_xp = raw_diamonds + processed_diamonds
+                self.convert(0, 0, raw_diamonds + processed_diamonds - diamonds_to_xp, raw_minerals + processed_minerals - minerals_to_xp, diamonds_to_xp, minerals_to_xp)
+            else:
+                self.convert(0, 0, 0, 0,
+                                              raw_diamonds + processed_diamonds,
+                                              raw_minerals + processed_minerals)
+            self.turn_on_base_leave = int(self.turn) + 2
             return
         self.reach_target(self.bases[self.us])
+
+    def manhattan_distance_of_path(self, path):
+        return sum(abs(path[i][0] - path[i + 1][0]) + abs(path[i][1] - path[i + 1][1]) for i in range(len(path) - 1))
 
     def find_all_resource_tiles(self):
         resource_tiles = []
@@ -55,8 +85,10 @@ class Bot(AbstractBot):
                     shortest_path_to_resource = 1000
                     shortest_path_to_base = 1000
                     position_to_collect = None
+                    manhattan_distance_min = None
                     new_resource = Resource(row, col, regex_match.group(1), int(regex_match.group(2)),
                                             int(regex_match.group(3)))
+
                     if new_resource.left == 0:
                         continue
                     for dx in dx_list:
@@ -80,12 +112,14 @@ class Bot(AbstractBot):
                                         shortest_path = path
                                         shortest_path_to_resource = len(path_to_resource)-1
                                         shortest_path_to_base = len(path_to_base)-1
+                                        manhattan_distance_min = self.manhattan_distance_of_path(path_to_resource) + min(1, new_resource.mines_left() * new_resource.left) * self.manhattan_distance_of_path(path_to_base)
 
                     if shortest_path >= 1000:
                         continue
                     new_resource.shortest_path_to_resource = shortest_path_to_resource
                     new_resource.shortest_path_to_base = shortest_path_to_base
                     new_resource.position_to_collect = position_to_collect
+                    new_resource.manhattan_distance_min = manhattan_distance_min
                     resource_tiles.append(new_resource)
         return resource_tiles
 
@@ -100,18 +134,30 @@ class Bot(AbstractBot):
         processed_diamonds = int(player.processed_diamonds)
         xp_if_going_to_base = (raw_minerals + processed_minerals) * 10 + (raw_diamonds + processed_diamonds) * 25
         best_resource = resource_tiles[0]
-        best_xp_per_turn = (best_resource.calculate_available_xp(8 - player.backpack_capacity) + xp_if_going_to_base) / (best_resource.shortest_path() + 1 + best_resource.mines_left(8 - player.backpack_capacity))
+        total_xp = (best_resource.calculate_available_xp(8 - player.backpack_capacity) + xp_if_going_to_base)
+        move_total = (best_resource.shortest_path() + 1 + best_resource.mines_left(8 - player.backpack_capacity)) * 2 + (int(self.turn) - self.turn_on_base_leave)
+        best_xp_per_turn = total_xp / move_total
         for resource in resource_tiles:
             total_xp = (resource.calculate_available_xp(8 - player.backpack_capacity) + xp_if_going_to_base)
-            move_total = (resource.shortest_path() + 1 + resource.mines_left(8 - player.backpack_capacity))
+            move_total = (resource.shortest_path() + 1 + resource.mines_left(8 - player.backpack_capacity)) * 2 + (int(self.turn) - self.turn_on_base_leave)
             resource_xp_per_turn = total_xp / move_total
             if resource_xp_per_turn > best_xp_per_turn:
                 print(f"resource {str(resource)} has {total_xp} xp, {move_total} moves, {resource_xp_per_turn} xp per turn", file=sys.stderr)
                 best_xp_per_turn = resource_xp_per_turn
                 best_resource = resource
+            elif resource_xp_per_turn == best_xp_per_turn:
+                if resource.manhattan_distance_min < best_resource.manhattan_distance_min:
+                    best_resource = resource
+                elif resource.manhattan_distance_min == best_resource.manhattan_distance_min:
+                    if resource.shortest_path_to_resource < best_resource.shortest_path_to_resource:
+                        best_resource = resource
+                    elif resource.shortest_path_to_resource == best_resource.shortest_path_to_resource:
+                        if resource.shortest_path_to_base < best_resource.shortest_path_to_base:
+                            best_resource = resource
 
-        shortest_path_to_base = len(
-            self.map.shortest_path(self.map.get_player_position(self.us + 1), self.bases[self.us])) - 1
+
+        shortest_path_to_base = (len(
+            self.map.shortest_path(self.map.get_player_position(self.us + 1), self.bases[self.us])) - 1) * 2 + (int(self.turn) - self.turn_on_base_leave)
         xp_per_turn_if_going_to_base = xp_if_going_to_base / (shortest_path_to_base + 1)
         if xp_per_turn_if_going_to_base > best_xp_per_turn:
             return None
