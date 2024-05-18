@@ -21,7 +21,7 @@ class Resource:
         return self.shortest_path_to_resource + self.shortest_path_to_base
 
     def mines_left(self, backpack_weight_left=8):
-        return min(backpack_weight_left / self.weight, self.left)
+        return min(int(backpack_weight_left / self.weight), self.left)
 
     def calculate_available_xp(self, backpack_weight_left=8):
         return self.value * self.mines_left(backpack_weight_left)

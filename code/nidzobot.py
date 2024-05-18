@@ -25,13 +25,16 @@ class Bot(AbstractBot):
         self.next_move = 'rest'
         resource_tiles = self.find_all_resource_tiles()
         best_resource = self.find_best_resource(resource_tiles)
-        if best_resource is not None and best_resource.shortest_path_to_resource == 0:
-            print(f"mining {str(best_resource)}, currently on tile {self.map.get_player_position(self.us + 1)}", file=sys.stderr)
-            self.mine((best_resource.row, best_resource.col))
-            return
         if best_resource is not None:
-            self.reach_target(best_resource.position_to_collect)
-            return
+            if best_resource.shortest_path_to_resource == 0:
+                if best_resource.mines_left(8 - self.players[self.us].backpack_capacity) > 0:
+                    print(f"mining {str(best_resource)}, currently on tile {self.map.get_player_position(self.us + 1)}", file=sys.stderr)
+                    self.mine((best_resource.row, best_resource.col))
+                    return
+            else:
+                self.reach_target(best_resource.position_to_collect)
+                return
+
         if self.map.get_player_position(self.us + 1) == self.bases[self.us]:
             my_player = self.players[self.us]
             self.convert(0, 0, 0, 0,
@@ -60,19 +63,23 @@ class Bot(AbstractBot):
                         for dy in dy_list:
                             if not (dx != 0 and dy != 0) and not (dx == 0 and dy == 0) and 0 <= row + dx < self.map.rows and 0 <= col + dy < self.map.cols:
                                 if self.map.board[row + dx][col + dy] == 'E' or self.map.board[row + dx][
-                                    col + dy] == str('A' if self.us == 0 else 'B'):
+                                    col + dy] == str('A' if self.us == 0 else 'B') or self.map.board[row + dx][
+                                    col + dy] == str(self.us + 1):
                                     path_to_resource = self.map.shortest_path(my_position, (row + dx, col + dy))
                                     if path_to_resource is None:
                                         continue
-                                    path_to_base = self.map.shortest_path(self.bases[self.us], (row + dx, col + dy))
+                                    if self.map.board[row + dx][col + dy] == str(self.us + 1):
+                                        path_to_base = self.map.shortest_path((row + dx, col + dy), self.bases[self.us])
+                                    else:
+                                        path_to_base = self.map.shortest_path(self.bases[self.us], (row + dx, col + dy))
                                     if path_to_base is None:
                                         continue
                                     path = len(path_to_resource) + len(path_to_base) - 2
                                     if path < shortest_path:
                                         position_to_collect = (row + dx, col + dy)
                                         shortest_path = path
-                                        shortest_path_to_resource = len(path_to_resource)
-                                        shortest_path_to_base = len(path_to_base)
+                                        shortest_path_to_resource = len(path_to_resource)-1
+                                        shortest_path_to_base = len(path_to_base)-1
 
                     if shortest_path >= 1000:
                         continue
@@ -93,10 +100,13 @@ class Bot(AbstractBot):
         processed_diamonds = int(player.processed_diamonds)
         xp_if_going_to_base = (raw_minerals + processed_minerals) * 10 + (raw_diamonds + processed_diamonds) * 25
         best_resource = resource_tiles[0]
-        best_xp_per_turn = (best_resource.calculate_available_xp(8 - player.backpack_capacity) + xp_if_going_to_base) / (best_resource.shortest_path() + 1 + best_resource.mines_left())
+        best_xp_per_turn = (best_resource.calculate_available_xp(8 - player.backpack_capacity) + xp_if_going_to_base) / (best_resource.shortest_path() + 1 + best_resource.mines_left(8 - player.backpack_capacity))
         for resource in resource_tiles:
-            resource_xp_per_turn = (resource.calculate_available_xp(8 - player.backpack_capacity) + xp_if_going_to_base) / (resource.shortest_path() + 1 + resource.mines_left())
+            total_xp = (resource.calculate_available_xp(8 - player.backpack_capacity) + xp_if_going_to_base)
+            move_total = (resource.shortest_path() + 1 + resource.mines_left(8 - player.backpack_capacity))
+            resource_xp_per_turn = total_xp / move_total
             if resource_xp_per_turn > best_xp_per_turn:
+                print(f"resource {str(resource)} has {total_xp} xp, {move_total} moves, {resource_xp_per_turn} xp per turn", file=sys.stderr)
                 best_xp_per_turn = resource_xp_per_turn
                 best_resource = resource
 
