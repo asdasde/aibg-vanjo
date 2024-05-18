@@ -27,8 +27,8 @@ class Bot(AbstractBot):
         else:
             self.next_move = 'rest'
 
+
     def calculate_next_move(self):
-        sys.stderr.write(f'edges: {self.map.graph.edges} \n')
         varticulation = self.map.find_varticulation_points(self.player_positions[self.opponent], self.bases[self.opponent], nodes_to_ignore = [self.bases[self.us]])
         sys.stderr.write(f'Varticulation points are : {varticulation} \n')
 
