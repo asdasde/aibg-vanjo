@@ -59,6 +59,9 @@ class Map:
         return list(set(adjacent_edges))
 
     def shortest_path(self, source, target, list_to_delete = None):
+
+        list_to_delete = [] if list_to_delete is None else list_to_delete
+
         queue = [source]
         from_node = []
         for i in range(10):
@@ -73,15 +76,15 @@ class Map:
                 while current_node != source:
                     res.append(current_node)
                     current_node = from_node[current_node[0]][current_node[1]]
-                return res
+                res.append(source)
+                return list(reversed(res))
             for neighbor in self.graph.neighbors(current_node):
-                if list_to_delete != None:
-                    for x in list_to_delete:
-                        if neighbor[0] == x[0] and current_node[0] == x[0] and (neighbor[1] <= x[1] <= current_node[1] or current_node[1] <= x[1] <= neighbor[1]):
-                            continue
-                        if neighbor[1] == x[1] and current_node[1] == x[1] and (neighbor[0] <= x[0] <= current_node[0] or current_node[0] <= x[0] <= neighbor[0]):
-                            continue
-                if from_node[neighbor[0]][neighbor[1]] == (-1, -1):
+                for x in list_to_delete:
+                    if neighbor[0] == x[0] and current_node[0] == x[0] and (neighbor[1] <= x[1] <= current_node[1] or current_node[1] <= x[1] <= neighbor[1]):
+                        continue
+                    if neighbor[1] == x[1] and current_node[1] == x[1] and (neighbor[0] <= x[0] <= current_node[0] or current_node[0] <= x[0] <= neighbor[0]):
+                        continue
+                if from_node[neighbor[0]][neighbor[1]] != (-1, -1):
                     continue
                 queue.append(neighbor)
                 from_node[neighbor[0]][neighbor[1]] = current_node
@@ -98,6 +101,24 @@ class Map:
     def cell_is_empty(self, cell : tuple) -> bool:
         return self.board[cell[0]][cell[1]] == 'E'
 
+
+    def check_varticulation(self, point : tuple, point1 : tuple, point2 : tuple, nodes_to_ignore = None) -> bool:
+        return self.shortest_path(point1, point2, nodes_to_ignore) is None
+
+    def find_varticulation_points(self, point1 : tuple, point2 : tuple, nodes_to_ignore = None) -> list:
+
+        sys.stderr.write(f"Shortest path from {point1} to {point2} : {self.shortest_path(point1, point2, nodes_to_ignore)} \n")
+
+        if point1 == point2:
+            return []
+
+        varticulation_points = []
+        for r in range(len(self.board)):
+            for c in range(len(self.board[0])):
+                if self.cell_is_empty((r, c)) and self.check_varticulation((r, c), point1, point2, nodes_to_ignore):
+                    varticulation_points.append((r, c))
+        return varticulation_points
+
     def print_board(self):
         max_width = max(len(cell) for row in self.board for cell in row)
         for r in range(self.rows):
@@ -110,36 +131,9 @@ class Map:
         sys.stderr.write(f'num nodes : {len(self.graph.nodes)} \n')
 
         sys.stderr.write(f'num edges: {len(self.graph.edges)} \n')
-        sys.stderr.write(f'edges: {self.graph.edges} \n')
-
-    def check_varticulation(self, point : tuple, point1 : tuple, point2 : tuple, nodes_to_ignore = None) -> bool:
-
-        edges = self.graph.edges(point, data=True)
-        self.graph.remove_node(point)
-
-        varticulation = False
-
-        if self.shortest_path(point1, point2, nodes_to_ignore) == None:
-            varticulation = True
-
-        self.graph.add_node(point)
-        self.graph.add_edges_from(edges)
-        return varticulation
-
-    def find_varticulation_points(self, point1 : tuple, point2 : tuple, nodes_to_ignore = None) -> list:
+      #  sys.stderr.write(f'edges: {self.graph.edges} \n')
 
 
-        sys.stderr.write(f"Shortest path from {point1} to {point2} : {self.shortest_path(point1, point2, nodes_to_ignore)} \n")
-
-        if point1 == point2:
-            return []
-
-        varticulation_points = []
-        for r in range(len(self.board)):
-            for c in range(len(self.board[0])):
-                if self.board[r][c] == 'E' and self.check_varticulation((r, c), point1, point2, nodes_to_ignore):
-                    varticulation_points.append((r, c))
-        return varticulation_points
     def __repr__(self):
         nodes_repr = "\n".join([f"Node {node}: {data['value']}" for node, data in self.graph.nodes(data=True)])
         edges_repr = "\n".join(

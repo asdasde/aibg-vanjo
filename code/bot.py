@@ -8,7 +8,7 @@ class Bot(AbstractBot):
         self.cells_to_block = [[(0, 8), (1, 9)], [(8, 0), (9, 1)]]
     def reach_target(self, target):
         shortest_path = self.map.shortest_path(self.player_positions[self.us], target, [self.bases[self.opponent]])
-
+        sys.stderr.write(f"Shortest path from {self.player_positions[self.us]} to {target}: {shortest_path}\n")
         if shortest_path is None:
             self.next_move = 'rest'
             return
