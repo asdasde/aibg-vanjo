@@ -59,17 +59,34 @@ class Map:
         return list(set(adjacent_edges))
 
     def shortest_path(self, source, target, list_to_delete = None):
-
-        try:
-            list_to_delete = [] if list_to_delete is None else list_to_delete
-            deleted_edges = self.get_adjecent_edges_from(list_to_delete)
-            self.graph.remove_nodes_from(list_to_delete)
-            shortest_path = nx.shortest_path(self.graph, source = source, target = target)
-            self.graph.add_nodes_from(list_to_delete)
-            self.graph.add_edges_from(deleted_edges)
-            return shortest_path
-        except nx.exception.NetworkXNoPath:
-            return None
+        queue = [source]
+        from_node = []
+        for i in range(10):
+            cur = []
+            for j in range(10):
+                cur.append((-1, -1))
+            from_node.append(cur)
+        while len(queue) > 0:
+            current_node = queue.pop(0)
+            if current_node == target:
+                res = []
+                while current_node != source:
+                    res.append(current_node)
+                    current_node = from_node[current_node[0]][current_node[1]]
+                return res
+            for neighbor in self.graph.neighbors(current_node):
+                if list_to_delete != None:
+                    for x in list_to_delete:
+                        if neighbor[0] == x[0] and current_node[0] == x[0] and (neighbor[1] <= x[1] <= current_node[1] or current_node[1] <= x[1] <= neighbor[1]):
+                            continue
+                        if neighbor[1] == x[1] and current_node[1] == x[1] and (neighbor[0] <= x[0] <= current_node[0] or current_node[0] <= x[0] <= neighbor[0]):
+                            continue
+                if from_node[neighbor[0]][neighbor[1]] == (-1, -1):
+                    continue
+                queue.append(neighbor)
+                from_node[neighbor[0]][neighbor[1]] = current_node
+        return None
+        
 
     def get_player_position(self, player : int) -> tuple:
         for r in range(len(self.board)):
