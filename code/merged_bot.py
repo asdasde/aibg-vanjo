@@ -260,10 +260,10 @@ class Bot(AbstractBot):
                 self.move(self.cells_to_reach[self.us])
 
     def calculate_next_move(self):
-        # if self.map.board[self.cells_to_block[self.us][self.us][0]][self.cells_to_block[self.us][self.us][1]][0] == 'F':
-        #     self.xp_greedy()
-        #     sys.stderr.write("  veridict : xp \n")
-        #     return
+        if self.map.board[self.cells_to_block[self.us][self.us][0]][self.cells_to_block[self.us][self.us][1]][0] == 'F':
+            self.xp_greedy()
+            sys.stderr.write("  veridict : xp \n")
+            return
         if self.over:
             sys.stderr.write('veridict : over\n')
             self.rest()
@@ -365,7 +365,7 @@ class Bot(AbstractBot):
                                 num = min(num, 2)
                             else:
                                 num = 3
-                        if self.path_len(our_shortest_to_target) + num < self.path_len(shortest_to_base_adj):
+                        if self.path_len(our_shortest_to_target) + num < self.path_len(shortest_to_base_adj) or self.players[self.us].xp - self.players[self.opponent].xp > 5 * backpack:
                             finalPoint = our_shortest_to_target[-1]
                             if self.player_positions[self.us] == finalPoint:
                                 sys.stderr.write('veridict : master plan\n')
@@ -375,12 +375,7 @@ class Bot(AbstractBot):
                                 sys.stderr.write('veridict : move to target master plan\n')
 
                                 self.reach_target(finalPoint)
-                        elif self.players[self.us].xp - self.players[self.opponent].xp < 15:
+                        else:
                             sys.stderr.write('veridict : play greeedy not big difference\n')
 
                             self.xp_greedy()
-                        else:
-                            sys.stderr.write('veridict : nothing rest')
-                            self.rest()
-
-

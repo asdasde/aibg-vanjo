@@ -7,7 +7,7 @@ SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 cd "$SCRIPT_DIR"
 
 # Name of the virtual environment directory
-VENV_DIR="venv"
+VENV_DIR=".venv"
 
 # Create a virtual environment if it doesn't exist
 if [ ! -d "$VENV_DIR" ]; then
