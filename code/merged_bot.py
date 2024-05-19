@@ -206,6 +206,24 @@ class Bot(AbstractBot):
             return
         if best_resource is None:
             self.reach_target(self.bases[self.us])
+            return
+        listadj = self.map.get_adjecent_nodes_with_value(self.cells_to_block[self.opponent][0], ('E', '1' if self.us == 0 else '2'))
+        listadj2 = self.map.get_adjecent_nodes_with_value(self.cells_to_block[self.opponent][1], ('E', '1' if self.us == 0 else '2'))
+        shortest = self.map.shortest_path(self.player_positions[self.us], listadj, [self.bases[self.opponent], self.player_positions[self.opponent]])
+        shortest2 = self.map.shortest_path(self.player_positions[self.us], listadj2, [self.bases[self.opponent], self.player_positions[self.opponent]])
+        if shortest is None and shortest2 is None:
+            return
+        if shortest is None:
+            if len(shortest2) == 1:
+                self.attack(self.cells_to_block[self.opponent][1])
+            else:
+                self.move(shortest2[1])
+        else:
+            if len(shortest) == 1:
+                self.attack(self.cells_to_block[self.opponent][0])
+            else:
+                self.move(shortest[1])
+
 
 
     def block_enemy(self):
