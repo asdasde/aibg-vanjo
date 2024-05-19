@@ -289,7 +289,10 @@ class Bot(AbstractBot):
                 self.move(self.cells_to_reach[self.us])
 
     def calculate_next_move(self):
-        if self.map.board[self.cells_to_block[self.us][self.us][0]][self.cells_to_block[self.us][self.us][1]][0] == 'F':
+
+
+        sys.stderr.write("Calculating next move\n")
+        if f'F_{self.opponent + 1}' in self.map.board[self.cells_to_block[self.us][self.us][0]][self.cells_to_block[self.us][self.us][1]]:
             self.xp_greedy()
             sys.stderr.write("  veridict : xp \n")
             return
@@ -388,11 +391,11 @@ class Bot(AbstractBot):
                         num = max(num1, num2)
                         if num1 > 0 and num2 > 0:
                             num = min(num1, num2)
-                        if backpack <= 3:
+                        if backpack == 0:
                             if num1 != 0 or num2 != 0:
                                 num = min(num, 2)
                             else:
-                                num = 3
+                                num = 2
                         if self.path_len(our_shortest_to_target) - num < self.path_len(shortest_to_base_adj) or self.players[self.us].xp - self.players[self.opponent].xp > 5 * backpack:
                             finalPoint = our_shortest_to_target[-1]
                             if self.player_positions[self.us] == finalPoint:
