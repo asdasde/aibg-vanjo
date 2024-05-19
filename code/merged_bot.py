@@ -178,6 +178,31 @@ class Bot(AbstractBot):
                 self.reach_target(best_resource.position_to_collect)
                 return
 
+        if best_resource == -1:
+            listadj = self.map.get_adjecent_nodes_with_value(self.cells_to_block[self.opponent][0],
+                                                             ['E', '1', 'A'] if self.us == 0 else ['E', '2', 'B'])
+            listadj2 = self.map.get_adjecent_nodes_with_value(self.cells_to_block[self.opponent][1],
+                                                              ['E', '1', 'A'] if self.us == 0 else ['E', '2', 'B'])
+            shortest = self.map.shortest_path(self.player_positions[self.us], listadj,
+                                              [self.bases[self.opponent], self.player_positions[self.opponent]])
+            shortest2 = self.map.shortest_path(self.player_positions[self.us], listadj2,
+                                               [self.bases[self.opponent], self.player_positions[self.opponent]])
+            if shortest is None and shortest2 is None:
+                return
+            if shortest is None:
+                if len(shortest2) == 1:
+                    self.attack(self.cells_to_block[self.opponent][1])
+                    sys.stderr.write('attacking\n')
+                else:
+                    self.move(shortest2[1])
+            else:
+                if len(shortest) == 1:
+                    self.attack(self.cells_to_block[self.opponent][0])
+                    sys.stderr.write('attacking\n')
+                else:
+                    self.move(shortest[1])
+            return
+
         if self.map.get_player_position(self.us + 1) == self.bases[self.us]:
             my_player = self.players[self.us]
             raw_minerals = int(my_player.raw_minerals)
@@ -207,22 +232,7 @@ class Bot(AbstractBot):
         if best_resource is None:
             self.reach_target(self.bases[self.us])
             return
-        listadj = self.map.get_adjecent_nodes_with_value(self.cells_to_block[self.opponent][0], ('E', '1' if self.us == 0 else '2'))
-        listadj2 = self.map.get_adjecent_nodes_with_value(self.cells_to_block[self.opponent][1], ('E', '1' if self.us == 0 else '2'))
-        shortest = self.map.shortest_path(self.player_positions[self.us], listadj, [self.bases[self.opponent], self.player_positions[self.opponent]])
-        shortest2 = self.map.shortest_path(self.player_positions[self.us], listadj2, [self.bases[self.opponent], self.player_positions[self.opponent]])
-        if shortest is None and shortest2 is None:
-            return
-        if shortest is None:
-            if len(shortest2) == 1:
-                self.attack(self.cells_to_block[self.opponent][1])
-            else:
-                self.move(shortest2[1])
-        else:
-            if len(shortest) == 1:
-                self.attack(self.cells_to_block[self.opponent][0])
-            else:
-                self.move(shortest[1])
+
 
 
 
