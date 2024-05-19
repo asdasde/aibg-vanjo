@@ -72,7 +72,7 @@ class Map:
         for dx, dy in self.directions:
             nx = node[0] + dx
             ny = node[1] + dy
-            if self.check_bounds((nx, ny)) and self.board[nx][ny] in list_of_values:
+            if self.check_bounds((nx, ny)) and self.board[nx][ny][0] in list_of_values:
                 nodes.append((nx, ny))
         return nodes
     def get_adjecent_edges_from(self, nodes : list):

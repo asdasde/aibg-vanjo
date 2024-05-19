@@ -260,12 +260,16 @@ class Bot(AbstractBot):
                 self.move(self.cells_to_reach[self.us])
 
     def calculate_next_move(self):
+        # if self.map.board[self.cells_to_block[self.us][self.us][0]][self.cells_to_block[self.us][self.us][1]][0] == 'F':
+        #     self.xp_greedy()
+        #     sys.stderr.write("  veridict : xp \n")
+        #     return
         if self.over:
             sys.stderr.write('veridict : over\n')
             self.rest()
             return
 
-        if self.players[self.us].xp <= self.players[self.opponent].xp or self.player_positions[self.opponent] == self.bases[self.opponent]:
+        if self.players[self.us].xp <= self.players[self.opponent].xp or (self.player_positions[self.opponent] == self.bases[self.opponent] and self.players[self.opponent].backpack_capacity > 0):
             sys.stderr.write('veridict : play greedy because less xp or opponent in base\n')
 
             self.xp_greedy()
@@ -297,7 +301,9 @@ class Bot(AbstractBot):
             else:
                 myPos = self.player_positions[self.us]
                 rx, ry = self.cells_to_reach[self.us]
-
+                if self.map.board[rx][ry][0] in ['M', 'D']:
+                    self.xp_greedy()
+                    return
                 r_adj = self.map.get_adjecent_nodes_with_value((rx, ry), ['E', '1' if self.us == 0 else '2'])
 
                 if self.map.board[rx][ry][0] == 'F':
@@ -340,8 +346,26 @@ class Bot(AbstractBot):
 
                                 return
 
-
-                        if self.path_len(our_shortest_to_target) < self.path_len(shortest_to_base_adj):
+                        listD = self.map.get_adjecent_nodes_with_value(self.player_positions[self.opponent], ['D'])
+                        listM = self.map.get_adjecent_nodes_with_value(self.player_positions[self.opponent], ['M'])
+                        backpack = self.players[self.opponent].backpack_capacity
+                        sum1 = 0
+                        for x, y in listM:
+                            sum1 += int(self.map.board[x][y][2])
+                        sum2 = 0
+                        for x, y in listD:
+                            sum2 += int(self.map.board[x][y][2])
+                        num1 = min(int((8 - backpack) / 2), sum1)
+                        num2 = min(int((8 - backpack) / 5), sum2)
+                        num = max(num1, num2)
+                        if num1 > 0 and num2 > 0:
+                            num = min(num1, num2)
+                        if backpack <= 3:
+                            if num1 != 0 or num2 != 0:
+                                num = min(num, 2)
+                            else:
+                                num = 3
+                        if self.path_len(our_shortest_to_target) + num < self.path_len(shortest_to_base_adj):
                             finalPoint = our_shortest_to_target[-1]
                             if self.player_positions[self.us] == finalPoint:
                                 sys.stderr.write('veridict : master plan\n')
