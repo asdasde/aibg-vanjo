@@ -22,18 +22,17 @@ class Bot(AbstractBot):
         shortest_path = self.map.shortest_path(self.player_positions[self.us], [target], [self.bases[self.opponent]])
         sys.stderr.write(f"Shortest path from {self.player_positions[self.us]} to {target}: {shortest_path}\n")
         if shortest_path is None:
-            self.next_move = 'rest'
+            self.rest()
             return
 
         next_cord = shortest_path[1]
         if self.players[self.us].energy <= self.manhattan_distance_of_path(
                 [self.map.get_player_position(self.us + 1), next_cord]) * min(8, 1 + self.players[
             self.us].backpack_capacity):
-            self.next_move = 'rest'
+            self.rest()
             return
 
-        self.next_move = f'move {next_cord[0]} {next_cord[1]}'
-
+        self.move(next_cord)
     def find_best_resource(self, resource_tiles):
         if not resource_tiles:
             return None
@@ -283,12 +282,16 @@ class Bot(AbstractBot):
                     self.rest()
                     return
 
-                finalPoint = our_shortest_to_target[-1]
-                if self.player_positions[self.us] == finalPoint:
-                    self.master_plan()
+                if self.path_len(our_shortest_to_target) < self.path_len(shortest_to_base_adj):
+                    finalPoint = our_shortest_to_target[-1]
+                    if self.player_positions[self.us] == finalPoint:
+                        self.master_plan()
+                    else:
+                        self.reach_target(finalPoint)
+                elif self.players[self.us].xp - self.players[self.opponent].xp < 15:
+                    self.xp_greedy()
                 else:
-                    self.reach_target(finalPoint)
-
+                    self.rest()
 
 #            if self.path_len(our_shortest_to_target) < self.path_len(target_point):
 #                finalPoint = our_shortest_to_target[-1]

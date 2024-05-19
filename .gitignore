@@ -1,2 +1,4 @@
 .venv/
 pid.log
+error.log
+error_alt.log
