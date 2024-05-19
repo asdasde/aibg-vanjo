@@ -4,7 +4,7 @@
 SCRIPT_DIR=$(cd "$(dirname "$0")"; pwd)
 
 # Activate the virtual environment
-source "$SCRIPT_DIR/.venv/bin/activate"
+source "$SCRIPT_DIR/venv/bin/activate"
 
 # Save the current process ID to pid.log
 echo "$$" > "$SCRIPT_DIR/pid.log"
