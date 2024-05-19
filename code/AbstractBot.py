@@ -62,7 +62,13 @@ class AbstractBot(ABC):
 
     def attack(self, target):
 
+
+
         if self.player_positions[self.opponent] in self.map.get_8_adjecent_nodes(target):
+            self.next_move = 'rest'
+            return
+
+        if f'F_{self.opponent + 1}' not in self.map.board[target[0]][target[1]]:
             self.next_move = 'rest'
             return
 
