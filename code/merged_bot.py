@@ -269,9 +269,8 @@ class Bot(AbstractBot):
             self.rest()
             return
 
-        if self.players[self.us].xp <= self.players[self.opponent].xp or (self.player_positions[self.opponent] == self.bases[self.opponent] and self.players[self.opponent].backpack_capacity > 0):
+        if self.players[self.us].xp <= self.players[self.opponent].xp or (self.player_positions[self.opponent] == self.bases[self.opponent] and self.players[self.opponent].backpack_capacity * 5 + self.players[self.opponent].xp >= self.players[self.us].xp):
             sys.stderr.write('veridict : play greedy because less xp or opponent in base\n')
-
             self.xp_greedy()
             sys.stderr.write("gubimo \n")
             return
@@ -365,7 +364,7 @@ class Bot(AbstractBot):
                                 num = min(num, 2)
                             else:
                                 num = 3
-                        if self.path_len(our_shortest_to_target) + num < self.path_len(shortest_to_base_adj) or self.players[self.us].xp - self.players[self.opponent].xp > 5 * backpack:
+                        if self.path_len(our_shortest_to_target) - num < self.path_len(shortest_to_base_adj) or self.players[self.us].xp - self.players[self.opponent].xp > 5 * backpack:
                             finalPoint = our_shortest_to_target[-1]
                             if self.player_positions[self.us] == finalPoint:
                                 sys.stderr.write('veridict : master plan\n')
