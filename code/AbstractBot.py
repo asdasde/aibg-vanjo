@@ -27,7 +27,7 @@ class AbstractBot(ABC):
         self.state_json = json.loads(line)
         self.turn = self.state_json['turn']
 
-        self.us = self.turn % 2
+        self.us = 1 - int(self.state_json['firstPlayerTurn'])
         self.opponent = 1 - self.us
 
         self.map = Map(self.state_json['board'])
@@ -61,6 +61,11 @@ class AbstractBot(ABC):
         self.next_move = f'shop {item}'
 
     def attack(self, target):
+
+        if self.player_positions[self.opponent] in self.map.get_8_adjecent_nodes(target):
+            self.next_move = 'rest'
+            return
+
         self.next_move = f'attack {target[0]} {target[1]}'
 
     def put_refinement(self, target, mineral, diamond):

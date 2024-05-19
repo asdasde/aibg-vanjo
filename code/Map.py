@@ -12,6 +12,7 @@ class Map:
         self.graph = self._create_graph()
 
         self.directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        self.directions8 = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
 
     def _create_graph(self):
         graph = nx.DiGraph()
@@ -52,6 +53,16 @@ class Map:
                 graph.add_edge((r, c), (row, c), weight=distance)
             else:
                 break
+
+    def get_8_adjecent_nodes(self, node) -> list:
+        nodes = []
+        for dx, dy in self.directions8:
+            nx = node[0] + dx
+            ny = node[1] + dy
+            if self.check_bounds((nx, ny)):
+                nodes.append((nx, ny))
+        return nodes
+
 
     def check_bounds(self, node : tuple) -> bool:
         nx, ny = node

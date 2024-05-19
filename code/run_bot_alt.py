@@ -3,7 +3,7 @@ from nidzobot import Bot
 from daze_bot import DazeBot
 import time
 
-bot = DazeBot()
+bot = Bot()
 while True:
     line = sys.stdin.readline()
     start_time = time.time()

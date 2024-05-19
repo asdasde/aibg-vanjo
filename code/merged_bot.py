@@ -35,7 +35,7 @@ class Bot(AbstractBot):
         self.move(next_cord)
     def find_best_resource(self, resource_tiles):
         if not resource_tiles:
-            return None
+            return -1
 
         player = self.players[self.us]
         raw_minerals = int(player.raw_minerals)
@@ -66,7 +66,7 @@ class Bot(AbstractBot):
                             best_resource = resource
 
 
-        shortest_path_to_base = (len(
+        shortest_path_to_base = (self.path_len(
             self.map.shortest_path(self.map.get_player_position(self.us + 1), self.bases[self.us])) - 1) * 2 + (int(self.turn) - self.turn_on_base_leave)
         xp_per_turn_if_going_to_base = xp_if_going_to_base / (shortest_path_to_base + 1)
         if xp_per_turn_if_going_to_base > best_xp_per_turn:
@@ -85,7 +85,7 @@ class Bot(AbstractBot):
                     shortest_path_to_resource = 1000
                     shortest_path_to_base = 1000
                     position_to_collect = None
-                    manhattan_distance_min = None
+                    manhattan_distance_min = 1000
                     new_resource = Resource(row, col, regex_match.group(1), int(regex_match.group(2)),
                                             int(regex_match.group(3)))
 
@@ -93,30 +93,41 @@ class Bot(AbstractBot):
                         continue
 
                     for dx, dy in self.map.directions:
+                        nx = row + dx
+                        ny = col + dy
+                        if self.map.check_bounds((nx, ny)) and self.map.board[nx][ny] in ['E', 'A' if self.us == 0 else 'B', '1' if self.us == 0 else '2']:
 
-                        if self.map.check_bounds((row + dx, col + dy)):
-                            if self.map.board[row + dx][col + dy] == 'E' or self.map.board[row + dx][
-                                col + dy] == str('A' if self.us == 0 else 'B') or self.map.board[row + dx][
-                                col + dy] == str(self.us + 1):
-                                path_to_resource = self.map.shortest_path(my_position, (row + dx, col + dy))
-                                if path_to_resource is None:
-                                    continue
-                                if self.map.board[row + dx][col + dy] == str(self.us + 1):
-                                    path_to_base = self.map.shortest_path((row + dx, col + dy), self.bases[self.us], [self.bases[self.opponent], self.player_positions[self.opponent]])
-                                else:
-                                    path_to_base = self.map.shortest_path(self.bases[self.us], (row + dx, col + dy), [self.bases[self.opponent], self.player_positions[self.opponent]])
-                                if path_to_base is None:
-                                    continue
-                                path = len(path_to_resource) + len(path_to_base) - 2
-                                if path < shortest_path:
-                                    position_to_collect = (row + dx, col + dy)
-                                    shortest_path = path
-                                    shortest_path_to_resource = len(path_to_resource) - 1
-                                    shortest_path_to_base = len(path_to_base) - 1
-                                    manhattan_distance_min = self.manhattan_distance_of_path(
-                                        path_to_resource) + min(8,
-                                                                1 + new_resource.mines_left() * new_resource.left) * self.manhattan_distance_of_path(
-                                        path_to_base)
+                            path_to_resource = self.map.shortest_path(source = my_position,
+                                                                      target = (nx, ny),
+                                                                      list_to_delete = [self.bases[self.opponent], self.player_positions[self.opponent]])
+                            if path_to_resource is None:
+                                continue
+
+                            if self.map.board[row + dx][col + dy] == str(self.us + 1):
+                                path_to_base = self.map.shortest_path((row + dx, col + dy), self.bases[self.us],
+                                                                      list_to_delete = [self.bases[self.opponent], self.player_positions[self.opponent]])
+                            else:
+                                path_to_base = self.map.shortest_path(self.bases[self.us], (row + dx, col + dy),
+                                                                      list_to_delete = [self.bases[self.opponent], self.player_positions[self.opponent]])
+
+
+                            if path_to_base is None:
+                                continue
+
+
+                            path = len(path_to_resource) + len(path_to_base) - 2
+
+                            manhattan_distance_path = (self.manhattan_distance_of_path(path_to_resource)
+                                                          + min(8, 1 + new_resource.mines_left() * new_resource.left)
+                                                          * self.manhattan_distance_of_path(path_to_base))
+
+
+                            if path < shortest_path or (path == shortest_path and manhattan_distance_path < manhattan_distance_min):
+                                position_to_collect = (nx, ny)
+                                shortest_path = path
+                                shortest_path_to_resource = len(path_to_resource) - 1
+                                shortest_path_to_base = len(path_to_base) - 1
+                                manhattan_distance_min = manhattan_distance_path
 
                     if shortest_path >= 1000:
                         continue
@@ -131,7 +142,7 @@ class Bot(AbstractBot):
         self.next_move = 'rest'
         resource_tiles = self.find_all_resource_tiles()
         best_resource = self.find_best_resource(resource_tiles)
-        if best_resource is not None:
+        if best_resource is not None and best_resource != -1:
             if best_resource.shortest_path_to_resource == 0:
                 if best_resource.mines_left(8 - self.players[self.us].backpack_capacity) > 0:
                     print(f"mining {str(best_resource)}, currently on tile {self.map.get_player_position(self.us + 1)}", file=sys.stderr)
@@ -164,7 +175,8 @@ class Bot(AbstractBot):
                                               raw_minerals + processed_minerals)
             self.turn_on_base_leave = int(self.turn) + 2
             return
-        self.reach_target(self.bases[self.us])
+        if best_resource is None:
+            self.reach_target(self.bases[self.us])
 
 
     def block_enemy(self):
@@ -249,10 +261,13 @@ class Bot(AbstractBot):
 
     def calculate_next_move(self):
         if self.over:
+            sys.stderr.write('veridict : over\n')
             self.rest()
             return
 
         if self.players[self.us].xp <= self.players[self.opponent].xp or self.player_positions[self.opponent] == self.bases[self.opponent]:
+            sys.stderr.write('veridict : play greedy because less xp or opponent in base\n')
+
             self.xp_greedy()
             sys.stderr.write("gubimo \n")
             return
@@ -262,8 +277,12 @@ class Bot(AbstractBot):
 
         if best_varticulation_point is not None:
             if self.player_positions[self.us] != best_varticulation_base:
+
+                sys.stderr.write('veridict : reach best articulation point\n')
                 self.reach_target(best_varticulation_base)
             else:
+                sys.stderr.write('veridict : build factory at articulation point\n')
+
                 self.build_factory(target=best_varticulation_point)
                 self.over = True
         else:
@@ -271,39 +290,73 @@ class Bot(AbstractBot):
                                                            target = self.cells_to_block[self.us],
                                                            list_to_delete = [self.player_positions[self.us], self.player_positions[self.us]])
             if shortest_to_base_adj is None:
+                self.over = True
+                sys.stderr.write('veridict : over2\n')
                 self.rest()
+
             else:
-                target_point = shortest_to_base_adj[-1]
-                our_shortest_to_target = self.map.shortest_path(source = self.player_positions[self.us],
-                                                                target= [target_point, self.cells_to_reach[self.us]],
-                                                                list_to_delete = [self.bases[self.opponent], self.player_positions[self.opponent]])
+                myPos = self.player_positions[self.us]
+                rx, ry = self.cells_to_reach[self.us]
 
-                if our_shortest_to_target == None:
-                    self.rest()
-                    return
+                r_adj = self.map.get_adjecent_nodes_with_value((rx, ry), ['E', '1' if self.us == 0 else '2'])
 
-                if self.path_len(our_shortest_to_target) < self.path_len(shortest_to_base_adj):
-                    finalPoint = our_shortest_to_target[-1]
-                    if self.player_positions[self.us] == finalPoint:
-                        self.master_plan()
+                if self.map.board[rx][ry][0] == 'F':
+
+                    if myPos in r_adj:
+                        self.attack((rx, ry))
+
+
                     else:
-                        self.reach_target(finalPoint)
-                elif self.players[self.us].xp - self.players[self.opponent].xp < 15:
-                    self.xp_greedy()
+                        shortest_adj = self.map.shortest_path(source = myPos,
+                                                              target = r_adj,
+                                                              list_to_delete = [self.player_positions[self.opponent], self.bases[self.opponent]])
+                        if shortest_adj is None:
+                            sys.stderr.write('veridict : greedy because no shortest adj\n')
+                            self.xp_greedy()
+                        else:
+                            self.move(shortest_adj[1])
+
                 else:
-                    self.rest()
+                    target_point = shortest_to_base_adj[-1]
+                    our_shortest_to_target = self.map.shortest_path(source = self.player_positions[self.us],
+                                                                    target= [target_point, self.cells_to_reach[self.us]],
+                                                                    list_to_delete = [self.bases[self.opponent], self.player_positions[self.opponent]])
 
-#            if self.path_len(our_shortest_to_target) < self.path_len(target_point):
-#                finalPoint = our_shortest_to_target[-1]
-#                if self.player_positions[self.us] == finalPoint:
-#                    self.master_plan()
-#                else:
-#                    self.reach_target(finalPoint)
-#            else:
-#
-#                sys.stderr.write(" Kao da gubimo al ne gubimo\n")
+                    if our_shortest_to_target is None:
+                        sys.stderr.write('veridict : play greedy bcs no path to target points\n')
+
+                        self.xp_greedy() # promeniti logiku da ide sto blize moze u zavisnosti od ranca
+                    else:
+
+                        if self.path_len(our_shortest_to_target) == 2:
+                            target_point_path = self.map.shortest_path(source = self.player_positions[self.us],
+                                                                    target= [target_point],
+                                                                    list_to_delete = [self.bases[self.opponent], self.player_positions[self.opponent]])
+
+                            if self.path_len(target_point_path) == 2:
+                                sys.stderr.write('veridict : move to target\n')
+
+                                self.move(target_point)
+
+                                return
 
 
+                        if self.path_len(our_shortest_to_target) < self.path_len(shortest_to_base_adj):
+                            finalPoint = our_shortest_to_target[-1]
+                            if self.player_positions[self.us] == finalPoint:
+                                sys.stderr.write('veridict : master plan\n')
 
+                                self.master_plan()
+                            else:
+                                sys.stderr.write('veridict : move to target master plan\n')
+
+                                self.reach_target(finalPoint)
+                        elif self.players[self.us].xp - self.players[self.opponent].xp < 15:
+                            sys.stderr.write('veridict : play greeedy not big difference\n')
+
+                            self.xp_greedy()
+                        else:
+                            sys.stderr.write('veridict : nothing rest')
+                            self.rest()
 
 
